@@ -6,8 +6,8 @@ module Confabulator
 					{ :sentence => elements.map { |e| e.content } }
 				end
 			
-				def compose
-					elements.map(&:compose).join
+				def compose(kb = nil)
+					elements.map {|e| e.compose(kb) }.join
 				end
 			}
 		 end
@@ -18,9 +18,9 @@ module Confabulator
 					{ :list => ([first_sentence.content] + rest_sentences.elements.map { |s| s.sentence.content }).flatten }
 				end
 
-				def compose
+				def compose(kb = nil)
 					elems = [first_sentence] + rest_sentences.elements.map { |s| s.sentence }
-					elems[elems.length * rand].compose
+					elems[elems.length * rand].compose(kb)
 				end
 			}
 		end
@@ -31,8 +31,8 @@ module Confabulator
 					{ :sub => name.text_value }
 				end
 			
-				def compose
-					Confabulator::Knowledge.find(name.text_value).confabulate
+				def compose(kb = nil)
+					kb ? kb.find(name.text_value).confabulate : ""
 				end
 			}
 		end
@@ -43,7 +43,7 @@ module Confabulator
 					text_value
 				end
 
-				def compose
+				def compose(kb = nil)
 					text_value
 				end
 			}
@@ -55,7 +55,7 @@ module Confabulator
 					text_value
 				end
 
-				def compose
+				def compose(kb = nil)
 					text_value
 				end
 			}
@@ -67,7 +67,7 @@ module Confabulator
 	     		text_value
 	   		end
 
-				def compose
+				def compose(kb = nil)
 					text_value
 				end
 			}
@@ -79,7 +79,7 @@ module Confabulator
 					text_value
 				end
 	
-				def compose
+				def compose(kb = nil)
 					text_value
 				end
 			}

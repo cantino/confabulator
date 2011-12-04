@@ -1,14 +1,15 @@
 module Confabulator
   class Parser
-    attr_accessor :confabulation
+    attr_accessor :confabulation, :kb
     
-    def initialize(str)
+    def initialize(str, opts = {})
       self.confabulation = str
+      self.kb = opts[:knowledge]
     end
     
     def confabulate
       if parser
-        parser.compose
+        parser.compose(kb)
       else
         ""
       end

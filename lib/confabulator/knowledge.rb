@@ -1,29 +1,36 @@
 module Confabulator
   class Knowledge
-    def self.find(name)
+    def initialize
+    end
+    
+    def find(name)
       knowledge[name] || empty_confabulator
     end
     
-    def self.add(name, sentence = nil)
+    def add(name, sentence = nil)
       if name.is_a?(Hash)
         name.each do |n, s|
-          knowledge[n] = Confabulator::Parser.new(s)
+          knowledge[n] = Confabulator::Parser.new(s, :knowledge => self)
         end
       else
-        knowledge[name] = Confabulator::Parser.new(sentence)
+        knowledge[name] = Confabulator::Parser.new(sentence, :knowledge => self)
       end
     end
     
-    def self.empty_confabulator
-      @empty ||= Confabulator::Parser.new("")
+    def empty_confabulator
+      @empty ||= Confabulator::Parser.new("", :knowledge => self)
     end
     
-    def self.knowledge
+    def knowledge
       @knowledge ||= {}
     end
     
-    def self.clear
+    def clear
       @knowledge = {}
+    end
+    
+    def confabulate(sentence)
+      Parser.new(sentence, :knowledge => self).confabulate
     end
   end
 end

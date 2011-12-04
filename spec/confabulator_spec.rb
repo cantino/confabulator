@@ -2,10 +2,6 @@
 require 'spec_helper'
 
 describe Confabulator do
-  before do
-    Confabulator::Knowledge.clear
-  end
-
   describe "choice blocks" do
     it "should work" do
       100.times.map {
@@ -29,8 +25,9 @@ describe Confabulator do
   
   describe "substitutions" do
     it "should use the knowledge base" do
-      Confabulator::Knowledge.add "world", "there"
-      Confabulator::Parser.new("Hello, [world]!").confabulate.should == "Hello, there!"
+      knowledge = Confabulator::Knowledge.new
+      knowledge.add "world", "there"
+      Confabulator::Parser.new("Hello, [world]!", :knowledge => knowledge).confabulate.should == "Hello, there!"
     end
     
     it "should return an empty string if it cannot be found" do
@@ -38,14 +35,17 @@ describe Confabulator do
     end
 
     it "should work recursively" do
-      Confabulator::Knowledge.add "expand" => "is [recursive]", "recursive" => "pretty cool"
-      Confabulator::Parser.new("Hello, this [expand]!").confabulate.should == "Hello, this is pretty cool!"
+      k = Confabulator::Knowledge.new
+      k.add "expand" => "is [recursive]", 
+            "recursive" => "pretty cool"
+      k.confabulate("Hello, this [expand]!").should == "Hello, this is pretty cool!"
     end
     
     it "should work with choices too" do
-      Confabulator::Knowledge.add "expand" => "is {[recursive]|not recursive}", "recursive" => "pretty cool"
+      k = Confabulator::Knowledge.new
+      k.add "expand" => "is {[recursive]|not recursive}", "recursive" => "pretty cool"
       100.times.map {
-        Confabulator::Parser.new("Hello, this [expand]!").confabulate
+        Confabulator::Parser.new("Hello, this [expand]!", :knowledge => k).confabulate
       }.uniq.sort.should == [
         "Hello, this is not recursive!",
         "Hello, this is pretty cool!"
