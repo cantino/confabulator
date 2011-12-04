@@ -1,0 +1,88 @@
+module Confabulator
+	grammar ConfabulatorLanguage
+		 rule sentence
+		 	(substitution / choice / escaped_char / words)+ {
+				def content
+					{ :sentence => elements.map { |e| e.content } }
+				end
+			
+				def compose
+					elements.map(&:compose).join
+				end
+			}
+		 end
+	
+		rule choice
+	   	'{' first_sentence:sentence rest_sentences:('|' sentence)* '}' {
+				def content
+					{ :list => ([first_sentence.content] + rest_sentences.elements.map { |s| s.sentence.content }).flatten }
+				end
+
+				def compose
+					elems = [first_sentence] + rest_sentences.elements.map { |s| s.sentence }
+					elems[elems.length * rand].compose
+				end
+			}
+		end
+	
+		rule substitution
+			!'\\\\' '[' w name:( [a-zA-Z] [a-zA-Z_0-9-]* ) w ']' {
+				def content
+					{ :sub => name.text_value }
+				end
+			
+				def compose
+					Confabulator::Knowledge.find(name.text_value).confabulate
+				end
+			}
+		end
+	
+		rule w
+			[ \t]* {
+				def content
+					text_value
+				end
+
+				def compose
+					text_value
+				end
+			}
+		end
+	
+		rule escaped_char
+			'\\' . {
+				def content
+					text_value
+				end
+
+				def compose
+					text_value
+				end
+			}
+		end
+	
+		rule words
+			[^\[{}\|\\]+ {
+	   		def content
+	     		text_value
+	   		end
+
+				def compose
+					text_value
+				end
+			}
+		end
+	
+		rule char
+			!'\\\\' . {
+				def content
+					text_value
+				end
+	
+				def compose
+					text_value
+				end
+			}
+		end
+	end
+end

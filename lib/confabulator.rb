@@ -1,28 +1,6 @@
-require "confabulator/version"
 require 'treetop'
+require "confabulator/version"
+require 'confabulator/language'
+require 'confabulator/parser'
+require 'confabulator/knowledge'
 require 'pp'
-
-module Confabulator
-  class Parser
-    attr_accessor :confabulation
-    
-    def self.initialize(str)
-      load_parser
-      self.confabulation = str
-    end
-    
-    def confabulate
-      parser.parse(confabulation).compose
-    end
-    
-    def parser
-      @cached_parser ||= ConfabulatorParser.new
-    end
-    
-    def self.load_parser
-      if !defined?(ConfabulatorParser)
-        Treetop.load File.join(File.expand_path(File.dirname(__FILE__), 'confabulator', 'grammer'))
-      end
-    end
-  end
-end
