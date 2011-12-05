@@ -1,3 +1,7 @@
+require "rubygems"
+require "linguistics"
+Linguistics::use( :en )
+
 module Confabulator
   class Parser
     attr_accessor :confabulation, :kb
@@ -9,7 +13,7 @@ module Confabulator
     
     def confabulate
       if parser
-        parser.compose(kb)
+        parser.compose(kb).squeeze(" ")
       else
         ""
       end

@@ -186,6 +186,9 @@ module Confabulator
    end
 
    module Substitution1
+   end
+
+   module Substitution2
      def w1
        elements[2]
      end
@@ -198,15 +201,33 @@ module Confabulator
        elements[4]
      end
 
+     def options
+       elements[5]
+     end
+
+     def w3
+       elements[6]
+     end
+
    end
 
-   module Substitution2
+   module Substitution3
 				def content
 					{ :sub => name.text_value }
 				end
 			
 				def compose(kb = nil)
-					kb ? kb.find(name.text_value).confabulate : ""
+					if kb
+						result = kb.find(name.text_value).confabulate
+						if options.text_value =~ /p/
+							result = result.en.plural
+						elsif options.text_value =~ /c/
+							result[0] = result[0].upcase if result[0]
+						end
+						result
+					else
+						""
+					end
 				end
    end
 
@@ -288,14 +309,65 @@ module Confabulator
              r9 = _nt_w
              s0 << r9
              if r9
-               if has_terminal?(']', false, index)
-                 r10 = instantiate_node(SyntaxNode,input, index...(index + 1))
+               i11, s11 = index, []
+               if has_terminal?(":", false, index)
+                 r12 = instantiate_node(SyntaxNode,input, index...(index + 1))
                  @index += 1
                else
-                 terminal_parse_failure(']')
-                 r10 = nil
+                 terminal_parse_failure(":")
+                 r12 = nil
+               end
+               s11 << r12
+               if r12
+                 s13, i13 = [], index
+                 loop do
+                   if has_terminal?('\G[a-zA-Z]', true, index)
+                     r14 = true
+                     @index += 1
+                   else
+                     r14 = nil
+                   end
+                   if r14
+                     s13 << r14
+                   else
+                     break
+                   end
+                 end
+                 if s13.empty?
+                   @index = i13
+                   r13 = nil
+                 else
+                   r13 = instantiate_node(SyntaxNode,input, i13...index, s13)
+                 end
+                 s11 << r13
+               end
+               if s11.last
+                 r11 = instantiate_node(SyntaxNode,input, i11...index, s11)
+                 r11.extend(Substitution1)
+               else
+                 @index = i11
+                 r11 = nil
+               end
+               if r11
+                 r10 = r11
+               else
+                 r10 = instantiate_node(SyntaxNode,input, index...index)
                end
                s0 << r10
+               if r10
+                 r15 = _nt_w
+                 s0 << r15
+                 if r15
+                   if has_terminal?(']', false, index)
+                     r16 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                     @index += 1
+                   else
+                     terminal_parse_failure(']')
+                     r16 = nil
+                   end
+                   s0 << r16
+                 end
+               end
              end
            end
          end
@@ -303,8 +375,8 @@ module Confabulator
      end
      if s0.last
        r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-       r0.extend(Substitution1)
        r0.extend(Substitution2)
+       r0.extend(Substitution3)
      else
        @index = i0
        r0 = nil

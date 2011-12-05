@@ -26,13 +26,23 @@ module Confabulator
 		end
 	
 		rule substitution
-			!'\\\\' '[' w name:( [a-zA-Z] [a-zA-Z_0-9-]* ) w ']' {
+			!'\\\\' '[' w name:( [a-zA-Z] [a-zA-Z_0-9-]* ) w options:(":" [a-zA-Z]+)? w ']' {
 				def content
 					{ :sub => name.text_value }
 				end
 			
 				def compose(kb = nil)
-					kb ? kb.find(name.text_value).confabulate : ""
+					if kb
+						result = kb.find(name.text_value).confabulate
+						if options.text_value =~ /p/
+							result = result.en.plural
+						elsif options.text_value =~ /c/
+							result[0] = result[0].upcase if result[0]
+						end
+						result
+					else
+						""
+					end
 				end
 			}
 		end

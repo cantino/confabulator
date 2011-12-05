@@ -51,5 +51,25 @@ describe Confabulator do
         "Hello, this is pretty cool!"
       ]
     end
+    
+    it "should be able to capitalize" do
+      k = Confabulator::Knowledge.new
+      k.add "blah" => "world foo"
+      k.confabulate("Hello. [blah:c]!").should == "Hello. World foo!"
+    end
+
+    it "should be able to pluralize" do
+      k = Confabulator::Knowledge.new
+      k.add "blah" => "ancient dog"
+      k.confabulate("Many [blah:p]!").should == "Many ancient dogs!"
+    end
+  end
+  
+  describe "general behavior" do
+    it "should remove repeated spaces" do
+      k = Confabulator::Knowledge.new
+      k.add "expand" => "  is {[recursive]|  not recursive}", "recursive" => "pretty   cool "
+      Confabulator::Parser.new("Hello, this  [expand]!", :knowledge => k).confabulate.should_not =~ /  /
+    end
   end
 end
