@@ -21,6 +21,20 @@ describe Confabulator do
         "Choice 3 and stuff"
       ]
     end
+    
+    it "should allow differential weighting" do
+      one = two = 0
+      500.times do
+        case Confabulator::Parser.new("{5:Choice 1|Choice 2} and stuff").confabulate
+          when "Choice 1 and stuff"
+            one += 1
+          when "Choice 2 and stuff"
+            two += 1
+        end
+      end
+      one.should > two * 3
+      one.should < two * 7
+    end
   end
   
   describe "substitutions" do

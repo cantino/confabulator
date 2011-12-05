@@ -2,10 +2,6 @@ module Confabulator
 	grammar ConfabulatorLanguage
 		 rule sentence
 		 	(substitution / choice / escaped_char / words)+ {
-				def content
-					{ :sentence => elements.map { |e| e.content } }
-				end
-			
 				def compose(kb = nil)
 					elements.map {|e| e.compose(kb) }.join
 				end
@@ -13,24 +9,28 @@ module Confabulator
 		 end
 	
 		rule choice
-	   	'{' first_sentence:sentence rest_sentences:('|' sentence)* '}' {
-				def content
-					{ :list => ([first_sentence.content] + rest_sentences.elements.map { |s| s.sentence.content }).flatten }
-				end
-
+	   	'{' first_sentence:(weight:weight? sentence) rest_sentences:('|' weight:weight? sentence)* '}' {
 				def compose(kb = nil)
-					elems = [first_sentence] + rest_sentences.elements.map { |s| s.sentence }
+					elems = []
+					(first_sentence.weight.empty? ? 1 : first_sentence.weight.value).times { elems << first_sentence.sentence }
+					rest_sentences.elements.each do |s|
+						(s.weight.empty? ? 1 : s.weight.value).times { elems << s.sentence }
+					end
 					elems[elems.length * rand].compose(kb)
 				end
 			}
 		end
-	
+		
+		rule weight
+			w:([0-9]+) ':' {
+				def value
+					w.text_value.to_i
+				end
+			}
+		end
+		
 		rule substitution
 			!'\\\\' '[' w name:( [a-zA-Z] [a-zA-Z_0-9-]* ) w options:(":" [a-zA-Z]+)? w ']' {
-				def content
-					{ :sub => name.text_value }
-				end
-			
 				def compose(kb = nil)
 					if kb
 						result = kb.find(name.text_value).confabulate
@@ -49,10 +49,6 @@ module Confabulator
 	
 		rule w
 			[ \t]* {
-				def content
-					text_value
-				end
-
 				def compose(kb = nil)
 					text_value
 				end
@@ -61,10 +57,6 @@ module Confabulator
 	
 		rule escaped_char
 			'\\' . {
-				def content
-					text_value
-				end
-
 				def compose(kb = nil)
 					text_value
 				end
@@ -73,10 +65,6 @@ module Confabulator
 	
 		rule words
 			[^\[{}\|\\]+ {
-	   		def content
-	     		text_value
-	   		end
-
 				def compose(kb = nil)
 					text_value
 				end
@@ -85,10 +73,6 @@ module Confabulator
 	
 		rule char
 			!'\\\\' . {
-				def content
-					text_value
-				end
-	
 				def compose(kb = nil)
 					text_value
 				end

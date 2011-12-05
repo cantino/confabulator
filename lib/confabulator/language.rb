@@ -10,10 +10,6 @@ module Confabulator
    end
 
    module Sentence0
-				def content
-					{ :sentence => elements.map { |e| e.content } }
-				end
-			
 				def compose(kb = nil)
 					elements.map {|e| e.compose(kb) }.join
 				end
@@ -75,12 +71,26 @@ module Confabulator
    end
 
    module Choice0
+     def weight
+       elements[0]
+     end
+
      def sentence
        elements[1]
      end
    end
 
    module Choice1
+     def weight
+       elements[1]
+     end
+
+     def sentence
+       elements[2]
+     end
+   end
+
+   module Choice2
      def first_sentence
        elements[1]
      end
@@ -91,13 +101,13 @@ module Confabulator
 
    end
 
-   module Choice2
-				def content
-					{ :list => ([first_sentence.content] + rest_sentences.elements.map { |s| s.sentence.content }).flatten }
-				end
-
+   module Choice3
 				def compose(kb = nil)
-					elems = [first_sentence] + rest_sentences.elements.map { |s| s.sentence }
+					elems = []
+					(first_sentence.weight.empty? ? 1 : first_sentence.weight.value).times { elems << first_sentence.sentence }
+					rest_sentences.elements.each do |s|
+						(s.weight.empty? ? 1 : s.weight.value).times { elems << s.sentence }
+					end
 					elems[elems.length * rand].compose(kb)
 				end
    end
@@ -123,61 +133,158 @@ module Confabulator
      end
      s0 << r1
      if r1
-       r2 = _nt_sentence
+       i2, s2 = index, []
+       r4 = _nt_weight
+       if r4
+         r3 = r4
+       else
+         r3 = instantiate_node(SyntaxNode,input, index...index)
+       end
+       s2 << r3
+       if r3
+         r5 = _nt_sentence
+         s2 << r5
+       end
+       if s2.last
+         r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+         r2.extend(Choice0)
+       else
+         @index = i2
+         r2 = nil
+       end
        s0 << r2
        if r2
-         s3, i3 = [], index
+         s6, i6 = [], index
          loop do
-           i4, s4 = index, []
+           i7, s7 = index, []
            if has_terminal?('|', false, index)
-             r5 = instantiate_node(SyntaxNode,input, index...(index + 1))
+             r8 = instantiate_node(SyntaxNode,input, index...(index + 1))
              @index += 1
            else
              terminal_parse_failure('|')
-             r5 = nil
+             r8 = nil
            end
-           s4 << r5
-           if r5
-             r6 = _nt_sentence
-             s4 << r6
+           s7 << r8
+           if r8
+             r10 = _nt_weight
+             if r10
+               r9 = r10
+             else
+               r9 = instantiate_node(SyntaxNode,input, index...index)
+             end
+             s7 << r9
+             if r9
+               r11 = _nt_sentence
+               s7 << r11
+             end
            end
-           if s4.last
-             r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
-             r4.extend(Choice0)
+           if s7.last
+             r7 = instantiate_node(SyntaxNode,input, i7...index, s7)
+             r7.extend(Choice1)
            else
-             @index = i4
-             r4 = nil
+             @index = i7
+             r7 = nil
            end
-           if r4
-             s3 << r4
+           if r7
+             s6 << r7
            else
              break
            end
          end
-         r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
-         s0 << r3
-         if r3
+         r6 = instantiate_node(SyntaxNode,input, i6...index, s6)
+         s0 << r6
+         if r6
            if has_terminal?('}', false, index)
-             r7 = instantiate_node(SyntaxNode,input, index...(index + 1))
+             r12 = instantiate_node(SyntaxNode,input, index...(index + 1))
              @index += 1
            else
              terminal_parse_failure('}')
-             r7 = nil
+             r12 = nil
            end
-           s0 << r7
+           s0 << r12
          end
        end
      end
      if s0.last
        r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-       r0.extend(Choice1)
        r0.extend(Choice2)
+       r0.extend(Choice3)
      else
        @index = i0
        r0 = nil
      end
 
      node_cache[:choice][start_index] = r0
+
+     r0
+   end
+
+   module Weight0
+     def w
+       elements[0]
+     end
+
+   end
+
+   module Weight1
+				def value
+					w.text_value.to_i
+				end
+   end
+
+   def _nt_weight
+     start_index = index
+     if node_cache[:weight].has_key?(index)
+       cached = node_cache[:weight][index]
+       if cached
+         cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+         @index = cached.interval.end
+       end
+       return cached
+     end
+
+     i0, s0 = index, []
+     s1, i1 = [], index
+     loop do
+       if has_terminal?('\G[0-9]', true, index)
+         r2 = true
+         @index += 1
+       else
+         r2 = nil
+       end
+       if r2
+         s1 << r2
+       else
+         break
+       end
+     end
+     if s1.empty?
+       @index = i1
+       r1 = nil
+     else
+       r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
+     end
+     s0 << r1
+     if r1
+       if has_terminal?(':', false, index)
+         r3 = instantiate_node(SyntaxNode,input, index...(index + 1))
+         @index += 1
+       else
+         terminal_parse_failure(':')
+         r3 = nil
+       end
+       s0 << r3
+     end
+     if s0.last
+       r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+       r0.extend(Weight0)
+       r0.extend(Weight1)
+     else
+       @index = i0
+       r0 = nil
+     end
+
+     node_cache[:weight][start_index] = r0
 
      r0
    end
@@ -212,10 +319,6 @@ module Confabulator
    end
 
    module Substitution3
-				def content
-					{ :sub => name.text_value }
-				end
-			
 				def compose(kb = nil)
 					if kb
 						result = kb.find(name.text_value).confabulate
@@ -388,10 +491,6 @@ module Confabulator
    end
 
    module W0
-				def content
-					text_value
-				end
-
 				def compose(kb = nil)
 					text_value
 				end
@@ -434,10 +533,6 @@ module Confabulator
    end
 
    module EscapedChar1
-				def content
-					text_value
-				end
-
 				def compose(kb = nil)
 					text_value
 				end
@@ -488,10 +583,6 @@ module Confabulator
    end
 
    module Words0
-	   		def content
-	     		text_value
-	   		end
-
 				def compose(kb = nil)
 					text_value
 				end
@@ -539,10 +630,6 @@ module Confabulator
    end
 
    module Char1
-				def content
-					text_value
-				end
-	
 				def compose(kb = nil)
 					text_value
 				end
