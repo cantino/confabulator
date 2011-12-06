@@ -1,6 +1,6 @@
 # Confabulator
 
-A Ruby grammar for procedural generation of random sentences.
+A recursive Ruby tempting language for the procedural generation of random sentences.
 
 ## Choice blocks
 
@@ -32,3 +32,5 @@ A Ruby grammar for procedural generation of random sentences.
 		> knowledge.add "dude", "friend"
 		> knowledge.confabulate("Hello, [dude:p]!")
 		=> "Hello, friends!"
+		
+		# Substitutions can contain other substitutions in choice nodes inside of substitutions, etc., ad infinitum.
