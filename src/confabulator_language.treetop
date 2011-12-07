@@ -1,7 +1,7 @@
 module Confabulator
 	grammar ConfabulatorLanguage
 		 rule sentence
-		 	(substitution / choice / escaped_char / words)+ {
+		 	(protected / substitution / choice / escaped_char / words)+ {
 				def compose(kb = nil)
 					elements.map {|e| e.compose(kb) }.join
 				end
@@ -25,6 +25,16 @@ module Confabulator
 			w:([0-9]+) ':' {
 				def value
 					w.text_value.to_i
+				end
+			}
+		end
+		
+		rule protected
+			"``" words:(("`" [^`]) / [^`])+ "``" {
+				def compose(kb = nil)
+					words.elements.map { |element|
+						element.text_value == "\\`" ? "`" : element.text_value
+					}.join
 				end
 			}
 		end
@@ -56,23 +66,15 @@ module Confabulator
 		end
 	
 		rule escaped_char
-			'\\' . {
+			'\\' character:. {
 				def compose(kb = nil)
-					text_value
+					character.text_value
 				end
 			}
 		end
 	
 		rule words
-			[^\[{}\|\\]+ {
-				def compose(kb = nil)
-					text_value
-				end
-			}
-		end
-	
-		rule char
-			!'\\\\' . {
+			[^\[{}`\|\\]+ {
 				def compose(kb = nil)
 					text_value
 				end

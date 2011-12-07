@@ -29,24 +29,29 @@ module Confabulator
      s0, i0 = [], index
      loop do
        i1 = index
-       r2 = _nt_substitution
+       r2 = _nt_protected
        if r2
          r1 = r2
        else
-         r3 = _nt_choice
+         r3 = _nt_substitution
          if r3
            r1 = r3
          else
-           r4 = _nt_escaped_char
+           r4 = _nt_choice
            if r4
              r1 = r4
            else
-             r5 = _nt_words
+             r5 = _nt_escaped_char
              if r5
                r1 = r5
              else
-               @index = i1
-               r1 = nil
+               r6 = _nt_words
+               if r6
+                 r1 = r6
+               else
+                 @index = i1
+                 r1 = nil
+               end
              end
            end
          end
@@ -285,6 +290,127 @@ module Confabulator
      end
 
      node_cache[:weight][start_index] = r0
+
+     r0
+   end
+
+   module Protected0
+   end
+
+   module Protected1
+     def words
+       elements[1]
+     end
+
+   end
+
+   module Protected2
+				def compose(kb = nil)
+					words.elements.map { |element|
+						element.text_value == "\\`" ? "`" : element.text_value
+					}.join
+				end
+   end
+
+   def _nt_protected
+     start_index = index
+     if node_cache[:protected].has_key?(index)
+       cached = node_cache[:protected][index]
+       if cached
+         cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+         @index = cached.interval.end
+       end
+       return cached
+     end
+
+     i0, s0 = index, []
+     if has_terminal?("``", false, index)
+       r1 = instantiate_node(SyntaxNode,input, index...(index + 2))
+       @index += 2
+     else
+       terminal_parse_failure("``")
+       r1 = nil
+     end
+     s0 << r1
+     if r1
+       s2, i2 = [], index
+       loop do
+         i3 = index
+         i4, s4 = index, []
+         if has_terminal?("`", false, index)
+           r5 = instantiate_node(SyntaxNode,input, index...(index + 1))
+           @index += 1
+         else
+           terminal_parse_failure("`")
+           r5 = nil
+         end
+         s4 << r5
+         if r5
+           if has_terminal?('\G[^`]', true, index)
+             r6 = true
+             @index += 1
+           else
+             r6 = nil
+           end
+           s4 << r6
+         end
+         if s4.last
+           r4 = instantiate_node(SyntaxNode,input, i4...index, s4)
+           r4.extend(Protected0)
+         else
+           @index = i4
+           r4 = nil
+         end
+         if r4
+           r3 = r4
+         else
+           if has_terminal?('\G[^`]', true, index)
+             r7 = true
+             @index += 1
+           else
+             r7 = nil
+           end
+           if r7
+             r3 = r7
+           else
+             @index = i3
+             r3 = nil
+           end
+         end
+         if r3
+           s2 << r3
+         else
+           break
+         end
+       end
+       if s2.empty?
+         @index = i2
+         r2 = nil
+       else
+         r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+       end
+       s0 << r2
+       if r2
+         if has_terminal?("``", false, index)
+           r8 = instantiate_node(SyntaxNode,input, index...(index + 2))
+           @index += 2
+         else
+           terminal_parse_failure("``")
+           r8 = nil
+         end
+         s0 << r8
+       end
+     end
+     if s0.last
+       r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+       r0.extend(Protected1)
+       r0.extend(Protected2)
+     else
+       @index = i0
+       r0 = nil
+     end
+
+     node_cache[:protected][start_index] = r0
 
      r0
    end
@@ -530,11 +656,14 @@ module Confabulator
    end
 
    module EscapedChar0
+     def character
+       elements[1]
+     end
    end
 
    module EscapedChar1
 				def compose(kb = nil)
-					text_value
+					character.text_value
 				end
    end
 
@@ -601,7 +730,7 @@ module Confabulator
 
      s0, i0 = [], index
      loop do
-       if has_terminal?('\G[^\\[{}\\|\\\\]', true, index)
+       if has_terminal?('\G[^\\[{}`\\|\\\\]', true, index)
          r1 = true
          @index += 1
        else
@@ -622,66 +751,6 @@ module Confabulator
      end
 
      node_cache[:words][start_index] = r0
-
-     r0
-   end
-
-   module Char0
-   end
-
-   module Char1
-				def compose(kb = nil)
-					text_value
-				end
-   end
-
-   def _nt_char
-     start_index = index
-     if node_cache[:char].has_key?(index)
-       cached = node_cache[:char][index]
-       if cached
-         cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
-         @index = cached.interval.end
-       end
-       return cached
-     end
-
-     i0, s0 = index, []
-     i1 = index
-     if has_terminal?('\\\\', false, index)
-       r2 = instantiate_node(SyntaxNode,input, index...(index + 2))
-       @index += 2
-     else
-       terminal_parse_failure('\\\\')
-       r2 = nil
-     end
-     if r2
-       r1 = nil
-     else
-       @index = i1
-       r1 = instantiate_node(SyntaxNode,input, index...index)
-     end
-     s0 << r1
-     if r1
-       if index < input_length
-         r3 = instantiate_node(SyntaxNode,input, index...(index + 1))
-         @index += 1
-       else
-         terminal_parse_failure("any character")
-         r3 = nil
-       end
-       s0 << r3
-     end
-     if s0.last
-       r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-       r0.extend(Char0)
-       r0.extend(Char1)
-     else
-       @index = i0
-       r0 = nil
-     end
-
-     node_cache[:char][start_index] = r0
 
      r0
    end

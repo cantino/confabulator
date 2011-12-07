@@ -4,6 +4,7 @@ Linguistics::use( :en )
 
 module Confabulator
   class Parser
+    REMOVE_SPACES = /(\S+) {2,}(\S+)/
     attr_accessor :confabulation, :kb
     
     def initialize(str, opts = {})
@@ -13,7 +14,9 @@ module Confabulator
     
     def confabulate
       if parser
-        parser.compose(kb).squeeze(" ")
+        result = parser.compose(kb)
+        result.gsub!(REMOVE_SPACES, '\1 \2') while result =~ REMOVE_SPACES
+        result
       else
         ""
       end

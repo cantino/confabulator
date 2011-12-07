@@ -80,10 +80,33 @@ describe Confabulator do
   end
   
   describe "general behavior" do
-    it "should remove repeated spaces" do
+    before do
+      @k = Confabulator::Knowledge.new
+      @k.add "expand" => "  is {[recursive]|  not recursive}", "recursive" => "pretty   cool "
+    end
+
+    it "should remove repeated spaces between words" do
+      @k.confabulate("Hello, this  [expand]!").should_not =~ /  /
+    end
+    
+    it "should not remove leading spaces" do
+      @k.confabulate("  Hello, this  [expand]!").should =~ /^  Hello/
+      @k.confabulate("Foo    bar\n\n   baz").should == "Foo bar\n\n   baz"
+      @k.confabulate("List:\n  * foo\n  * bar baz     bing  blah").should == "List:\n  * foo\n  * bar baz bing blah"
+    end
+  end
+  
+  describe "protected regions" do
+    it "should not parse content inside of the region" do
       k = Confabulator::Knowledge.new
-      k.add "expand" => "  is {[recursive]|  not recursive}", "recursive" => "pretty   cool "
-      Confabulator::Parser.new("Hello, this  [expand]!", :knowledge => k).confabulate.should_not =~ /  /
+      k.add "expand" => "is ``{[recursive]|not recursive} single ticks (`) are ok``"
+      Confabulator::Parser.new("Hello, this [expand]!", :knowledge => k).confabulate.should == "Hello, this is {[recursive]|not recursive} single ticks (`) are ok!"
+    end
+  end
+  
+  describe "escaped characters" do
+    it "should show up as unescaped" do
+      Confabulator::Parser.new("Hi \\[foo]\\{bar\\|foo\\}\\`baz\\` and stuff").confabulate.should == "Hi [foo]{bar|foo}`baz` and stuff"
     end
   end
 end

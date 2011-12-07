@@ -35,7 +35,7 @@ You can differentially weight the options: {5:This is 5 times more likely|than t
 Substitutions let you re-use common templates.
 
     > knowledge = Confabulator::Knowledge.new
-    > knowledge.add "world", "there"
+    > knowledge.add "world", "there" # a hash is also acceptable
     > Confabulator::Parser.new("Hello, [world]!", :knowledge => knowledge).confabulate
     => "Hello, there!"
 
@@ -51,11 +51,30 @@ You can ask a substitution to be capitalized:
 
 Or pluralized:
 
-    > knowledge.add "dude", "friend"
+    > knowledge.add "dude" => "friend"
     > knowledge.confabulate("Hello, [dude:p]!")
     => "Hello, friends!"
 		
 Substitutions can contain other substitutions in choice nodes inside of substitutions, etc., ad infinitum.
+
+### Escaping
+
+You must escape the special characters {, [, `, and | with backslashes:
+
+  > knowledge.add "dude" => "friend"
+  > knowledge.confabulate("Hello, \\{friend\\|something\\} \\`\\`stuff\\`\\` \\[dude:p]!")
+  => "Hello, {friend|something}  ``stuff`` [dude:p]!!"
+
+### Protected regions
+
+Sometimes you want to insert user generated content without having to escape every {, [, `, and |.  For this you use protected regions.
+
+  > knowledge.add "dude" => "friend"
+  > user_content = "protect regions [and stuff] with double backticks (`)!"
+  > knowledge.confabulate("Hello, ``#{user_content}``")
+  => "Hello, protect regions [and stuff] with double backticks (`)!"
+
+At the moment, sequences of more than one backtick are never allowed inside of a protected region.
 
 ## Helping out
 
