@@ -61,18 +61,18 @@ Substitutions can contain other substitutions in choice nodes inside of substitu
 
 You must escape the special characters {, [, `, and | with backslashes:
 
-  > knowledge.add "dude" => "friend"
-  > knowledge.confabulate("Hello, \\{friend\\|something\\} \\`\\`stuff\\`\\` \\[dude:p]!")
-  => "Hello, {friend|something}  ``stuff`` [dude:p]!!"
+    > knowledge.add "dude" => "friend"
+    > knowledge.confabulate("Hello, \\{friend\\|something\\} \\`\\`stuff\\`\\` \\[dude:p]!")
+    => "Hello, {friend|something}  ``stuff`` [dude:p]!!"
 
 ### Protected regions
 
 Sometimes you want to insert user generated content without having to escape every {, [, `, and |.  For this you use protected regions.
 
-  > knowledge.add "dude" => "friend"
-  > user_content = "protect regions [and stuff] with double backticks (`)!"
-  > knowledge.confabulate("Hello, ``#{user_content}``")
-  => "Hello, protect regions [and stuff] with double backticks (`)!"
+    > knowledge.add "dude" => "friend"
+    > user_content = "protect regions [and stuff] with double backticks (`)!"
+    > knowledge.confabulate("Hello, ``#{user_content}``")
+    => "Hello, protect regions [and stuff] with double backticks (`)!"
 
 At the moment, sequences of more than one backtick are never allowed inside of a protected region.
 
