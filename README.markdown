@@ -1,6 +1,10 @@
 # Confabulator
 
-A recursive Ruby tempting language for the procedural generation of random sentences.
+A recursive Ruby templating language for the procedural generation of random sentences.
+
+## Why do I care?
+
+Perhaps you want to generate emails, text messages, or webpages that are all readable, but have different wording.  Perhaps you're writing a game and want to vary character dialog.  Perhaps you don't need a reason.
 
 ## Install
 
@@ -20,12 +24,16 @@ Choice blocks let the parser make a random choice.
     Choice two and stuff
     ...
 
-Recursion is fine (just try to avoid loops):
+Choices inside of choices (ad infinitum) are fine:
 
-    > 5.times { puts Confabulator::Parser.new("{Choice {1|2}|Choice 3} and stuff").confabulate }
-    Choice 3 and stuff
-    Choice 1 and stuff
-    Choice 2 and stuff
+    > 5.times { puts Confabulator::Parser.new("This is {an example|a {good|great|mediocre} demonstration}").confabulate }
+    This is a great demonstration
+    This is a mediocre demonstration
+    This is an example
+    This is a good demonstration
+    This is an example
+    This is an example
+    This is a good demonstration
     ...
 
 You can differentially weight the options: {5:This is 5 times more likely|than this}
@@ -35,19 +43,22 @@ You can differentially weight the options: {5:This is 5 times more likely|than t
 Substitutions let you re-use common templates.
 
     > knowledge = Confabulator::Knowledge.new
-    > knowledge.add "world", "there" # a hash is also acceptable
-    > Confabulator::Parser.new("Hello, [world]!", :knowledge => knowledge).confabulate
+    > knowledge.add "friend", "{friend|world|there}" # a hash is also acceptable
+    > Confabulator::Parser.new("Hello, [friend]!", :knowledge => knowledge).confabulate
     => "Hello, there!"
+    > Confabulator::Parser.new("Hello, [friend]!", :knowledge => knowledge).confabulate
+    => "Hello, world!"
+    ...
 
-Equivalently:
+Equivalently, as a helper on the Knowledge object:
 
-    > knowledge.confabulate("Hello, [world]!")
+    > knowledge.confabulate("Hello, [friend]!")
     => "Hello, there!"
 
 You can ask a substitution to be capitalized:
 
-    > knowledge.confabulate("Hello, [world:c]!")
-    => "Hello, There!"
+    > knowledge.confabulate("Hello, [friend:c]!")
+    => "Hello, World!"
 
 Or pluralized:
 
@@ -55,7 +66,7 @@ Or pluralized:
     > knowledge.confabulate("Hello, [dude:p]!")
     => "Hello, friends!"
 		
-Substitutions can contain other substitutions in choice nodes inside of substitutions, etc., ad infinitum.
+Substitutions can contain other substitutions inside of choice nodes inside of other substitutions, etc., ad infinitum.  Just try to avoid infinite loops!
 
 ### Escaping
 
@@ -76,6 +87,15 @@ Sometimes you want to insert user generated content without having to escape eve
 
 At the moment, sequences of more than one backtick are never allowed inside of a protected region.
 
+## Next Steps
+
+Here are some things that could be added to this library:
+
+ * Depth limits
+ * Better escaping
+ * Learning through back propagation of a reward signal and optimization of the choice nodes to make the rewarded or penalized outcome more or less likely, respectively.
+ * Whatever you want!
+
 ## Helping out
 
-Fork, write specs, add a feature, send me a pull request!
+Fork, write specs, add a feature, write documentation, send me a pull request!
