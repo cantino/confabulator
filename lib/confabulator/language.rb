@@ -526,23 +526,18 @@ module Confabulator
 				end
 
 				def tree(kb = nil)
-				if kb
-					results = kb.find(name.text_value).tree
-					if options.text_value =~ /p/
-     # results = Confabulator::Parser.expand(results).map { |r| r.en.plural }
-					  results = { :pluralize => results }
-					end
-					if options.text_value =~ /c/
-     # results = Confabulator::Parser.expand(results)
-     #               results.each do |r|
-     #                 r[0] = r[0].upcase if r[0]
-     #               end
-					  results = { :capitalize => results }
-					end
-					results
-				else
-					""
-				end
+  				if kb
+  					results = kb.find(name.text_value).tree
+  					if options.text_value =~ /p/
+  					  results = { :pluralize => results }
+  					end
+  					if options.text_value =~ /c/
+  					  results = { :capitalize => results }
+  					end
+  					results
+  				else
+  					""
+  				end
 				end
    end
 

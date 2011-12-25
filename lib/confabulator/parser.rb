@@ -23,11 +23,7 @@ module Confabulator
     end
     
     def all_confabulations
-      structure = tree
-      pp structure
-      self.class.expand_tree(structure).tap do |a|
-        pp a
-      end
+      self.class.expand_tree(tree)
     end
 
     def tree
@@ -48,10 +44,27 @@ module Confabulator
         expand_tree("", combinations, *s)
       else
         case x
-          when Hash then x[:choices].each{|x| expand_tree(s, combinations, x, *a)}
-          when Array then expand_tree(s, combinations, *x, *a)
-          when String then expand_tree(s+x, combinations, *a)
-          when nil then combinations << s
+          when Hash
+            if x[:choices]
+              x[:choices].each {|c| expand_tree(s, combinations, c, *a)}
+            elsif x[:pluralize]
+              tree_below_here = expand_tree("", [], x[:pluralize]).map { |r| r.en.plural }
+              expand_tree(s, combinations, { :choices => tree_below_here })
+            elsif x[:capitalize]
+              tree_below_here = expand_tree("", [], x[:capitalize])
+              tree_below_here.each { |r| r[0] = r[0].upcase if r[0] }
+              expand_tree(s, combinations, { :choices => tree_below_here })
+            else
+              raise "Hash found without :choices, :pluralize, or :capitalize in it: #{x.inspect}"
+            end
+          when Array
+            expand_tree(s, combinations, *x, *a)
+          when String
+            expand_tree(s+x, combinations, *a)
+          when nil
+            combinations << s
+          else
+            raise "Non String, Array, Hash, or nil value in expand_tree: #{x.inspect}"
         end
         combinations
       end

@@ -126,24 +126,26 @@ describe Confabulator do
     end
   end
   
-  describe "enumeration" do
+  describe "listing all possible confabulations" do
     it "should be able to enumerate all possible onfabulations" do
       k = Confabulator::Knowledge.new
-      k.add "expand" => "your {friend|pal}"
-      all = Confabulator::Parser.new("{He{ll}o|Hi} {worl{d|}|there}, says [expand]", :knowledge => k).all_confabulations
+      k.add "friend" => "{friend|pal}"
+      k.add "from" => "your [friend:c]"
+      k.add "said" => "says"
+      all = Confabulator::Parser.new("{He{ll}o|Hi} {worl{d|}|there}, [said] [from:cp]", :knowledge => k).all_confabulations
       all.should =~ [
-        "Hello world, says your friend", 
-        "Hello worl, says your friend", 
-        "Hello there, says your friend", 
-        "Hi world, says your friend", 
-        "Hi worl, says your friend", 
-        "Hi there, says your friend",
-        "Hello world, says your pal", 
-        "Hello worl, says your pal", 
-        "Hello there, says your pal", 
-        "Hi world, says your pal", 
-        "Hi worl, says your pal", 
-        "Hi there, says your pal"
+        "Hello world, says Your Friends", 
+        "Hello worl, says Your Friends", 
+        "Hello there, says Your Friends", 
+        "Hi world, says Your Friends", 
+        "Hi worl, says Your Friends", 
+        "Hi there, says Your Friends",
+        "Hello world, says Your Pals", 
+        "Hello worl, says Your Pals", 
+        "Hello there, says Your Pals", 
+        "Hi world, says Your Pals", 
+        "Hi worl, says Your Pals", 
+        "Hi there, says Your Pals"
       ]
     end
   end
