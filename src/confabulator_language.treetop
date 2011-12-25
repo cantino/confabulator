@@ -2,24 +2,50 @@ module Confabulator
 	grammar ConfabulatorLanguage
 		 rule sentence
 		 	(protected / substitution / choice / escaped_char / words)+ {
-				def compose(kb = nil)
-					elements.map {|e| e.compose(kb) }.join
+				def confabulate(kb = nil)
+					elements.map {|e| e.confabulate(kb) }.join
 				end
+				
+				def tree(kb = nil)
+				  elements.map { |e| e.tree(kb) }
+			  end
 			}
 		 end
 	
 		rule choice
-	   	'{' first_sentence:(weight:weight? sentence) rest_sentences:('|' weight:weight? sentence)* '}' {
-				def compose(kb = nil)
-					elems = []
-					(first_sentence.weight.empty? ? 1 : first_sentence.weight.value).times { elems << first_sentence.sentence }
+	   	'{' first_sentence:(weight:weight? sentence) rest_sentences:('|' weight:weight? sentence_or_empty:(sentence / empty))* '}' {
+	   	  def choices(kb, no_weighting = false)
+	   	    elems = []
+					((no_weighting || first_sentence.weight.empty?) ? 1 : first_sentence.weight.value).times { elems << first_sentence.sentence }
 					rest_sentences.elements.each do |s|
-						(s.weight.empty? ? 1 : s.weight.value).times { elems << s.sentence }
+						((no_weighting || s.weight.empty?) ? 1 : s.weight.value).times { elems << s.sentence_or_empty }
 					end
-					elems[elems.length * rand].compose(kb)
+					elems
+				end
+
+				def confabulate(kb = nil)
+				  elems = choices(kb)
+				  elems[elems.length * rand].confabulate(kb)
+				end
+
+				def tree(kb = nil)
+				  elems = choices(kb, true)
+				  { :choices => elems.map {|e| Confabulator::Parser.remove_singleton_arrays(e.tree(kb)) } }
 				end
 			}
 		end
+		
+		rule empty
+		  '' {
+		    def confabulate(kb = nil)
+		      ''
+		    end
+
+				def tree(kb = nil)
+				  confabulate(kb)
+				end
+		  }
+	  end
 		
 		rule weight
 			w:([0-9]+) ':' {
@@ -31,22 +57,27 @@ module Confabulator
 		
 		rule protected
 			"``" words:(("`" [^`]) / [^`])+ "``" {
-				def compose(kb = nil)
+				def confabulate(kb = nil)
 					words.elements.map { |element|
 						element.text_value == "\\`" ? "`" : element.text_value
 					}.join
+				end
+
+				def tree(kb = nil)
+				  confabulate(kb)
 				end
 			}
 		end
 		
 		rule substitution
 			!'\\\\' '[' w name:( [a-zA-Z] [a-zA-Z_0-9-]* ) w options:(":" [a-zA-Z]+)? w ']' {
-				def compose(kb = nil)
+				def confabulate(kb = nil)
 					if kb
 						result = kb.find(name.text_value).confabulate
 						if options.text_value =~ /p/
 							result = result.en.plural
-						elsif options.text_value =~ /c/
+						end
+						if options.text_value =~ /c/
 							result[0] = result[0].upcase if result[0]
 						end
 						result
@@ -54,29 +85,61 @@ module Confabulator
 						""
 					end
 				end
+
+				def tree(kb = nil)
+  				if kb
+  					results = kb.find(name.text_value).tree
+  					if options.text_value =~ /p/
+              # results = Confabulator::Parser.expand(results).map { |r| r.en.plural }
+  					  results = { :pluralize => results }
+  					end
+  					if options.text_value =~ /c/
+              # results = Confabulator::Parser.expand(results)
+              #               results.each do |r|
+              #                 r[0] = r[0].upcase if r[0]
+              #               end
+  					  results = { :capitalize => results }
+  					end
+  					results
+  				else
+  					""
+  				end
+				end
 			}
 		end
 	
 		rule w
 			[ \t]* {
-				def compose(kb = nil)
+				def confabulate(kb = nil)
 					text_value
+				end
+
+				def tree(kb = nil)
+				  confabulate(kb)
 				end
 			}
 		end
 	
 		rule escaped_char
 			'\\' character:. {
-				def compose(kb = nil)
+				def confabulate(kb = nil)
 					character.text_value
+				end
+
+				def tree(kb = nil)
+				  confabulate(kb)
 				end
 			}
 		end
 	
 		rule words
 			[^\[{}`\|\\]+ {
-				def compose(kb = nil)
+				def confabulate(kb = nil)
 					text_value
+				end
+				
+				def tree(kb = nil)
+				  confabulate(kb)
 				end
 			}
 		end

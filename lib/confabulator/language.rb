@@ -10,9 +10,13 @@ module Confabulator
    end
 
    module Sentence0
-				def compose(kb = nil)
-					elements.map {|e| e.compose(kb) }.join
+				def confabulate(kb = nil)
+					elements.map {|e| e.confabulate(kb) }.join
 				end
+				
+				def tree(kb = nil)
+				  elements.map { |e| e.tree(kb) }
+			  end
    end
 
    def _nt_sentence
@@ -90,7 +94,7 @@ module Confabulator
        elements[1]
      end
 
-     def sentence
+     def sentence_or_empty
        elements[2]
      end
    end
@@ -107,13 +111,23 @@ module Confabulator
    end
 
    module Choice3
-				def compose(kb = nil)
-					elems = []
-					(first_sentence.weight.empty? ? 1 : first_sentence.weight.value).times { elems << first_sentence.sentence }
+	   	  def choices(kb, no_weighting = false)
+	   	    elems = []
+					((no_weighting || first_sentence.weight.empty?) ? 1 : first_sentence.weight.value).times { elems << first_sentence.sentence }
 					rest_sentences.elements.each do |s|
-						(s.weight.empty? ? 1 : s.weight.value).times { elems << s.sentence }
+						((no_weighting || s.weight.empty?) ? 1 : s.weight.value).times { elems << s.sentence_or_empty }
 					end
-					elems[elems.length * rand].compose(kb)
+					elems
+				end
+
+				def confabulate(kb = nil)
+				  elems = choices(kb)
+				  elems[elems.length * rand].confabulate(kb)
+				end
+
+				def tree(kb = nil)
+				  elems = choices(kb, true)
+				  { :choices => elems.map {|e| Confabulator::Parser.remove_singleton_arrays(e.tree(kb)) } }
 				end
    end
 
@@ -179,7 +193,19 @@ module Confabulator
              end
              s7 << r9
              if r9
-               r11 = _nt_sentence
+               i11 = index
+               r12 = _nt_sentence
+               if r12
+                 r11 = r12
+               else
+                 r13 = _nt_empty
+                 if r13
+                   r11 = r13
+                 else
+                   @index = i11
+                   r11 = nil
+                 end
+               end
                s7 << r11
              end
            end
@@ -200,13 +226,13 @@ module Confabulator
          s0 << r6
          if r6
            if has_terminal?('}', false, index)
-             r12 = instantiate_node(SyntaxNode,input, index...(index + 1))
+             r14 = instantiate_node(SyntaxNode,input, index...(index + 1))
              @index += 1
            else
              terminal_parse_failure('}')
-             r12 = nil
+             r14 = nil
            end
-           s0 << r12
+           s0 << r14
          end
        end
      end
@@ -220,6 +246,41 @@ module Confabulator
      end
 
      node_cache[:choice][start_index] = r0
+
+     r0
+   end
+
+   module Empty0
+		    def confabulate(kb = nil)
+		      ''
+		    end
+
+				def tree(kb = nil)
+				  confabulate(kb)
+				end
+   end
+
+   def _nt_empty
+     start_index = index
+     if node_cache[:empty].has_key?(index)
+       cached = node_cache[:empty][index]
+       if cached
+         cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+         @index = cached.interval.end
+       end
+       return cached
+     end
+
+     if has_terminal?('', false, index)
+       r0 = instantiate_node(SyntaxNode,input, index...(index + 0))
+       r0.extend(Empty0)
+       @index += 0
+     else
+       terminal_parse_failure('')
+       r0 = nil
+     end
+
+     node_cache[:empty][start_index] = r0
 
      r0
    end
@@ -305,10 +366,14 @@ module Confabulator
    end
 
    module Protected2
-				def compose(kb = nil)
+				def confabulate(kb = nil)
 					words.elements.map { |element|
 						element.text_value == "\\`" ? "`" : element.text_value
 					}.join
+				end
+
+				def tree(kb = nil)
+				  confabulate(kb)
 				end
    end
 
@@ -445,18 +510,39 @@ module Confabulator
    end
 
    module Substitution3
-				def compose(kb = nil)
+				def confabulate(kb = nil)
 					if kb
 						result = kb.find(name.text_value).confabulate
 						if options.text_value =~ /p/
 							result = result.en.plural
-						elsif options.text_value =~ /c/
+						end
+						if options.text_value =~ /c/
 							result[0] = result[0].upcase if result[0]
 						end
 						result
 					else
 						""
 					end
+				end
+
+				def tree(kb = nil)
+				if kb
+					results = kb.find(name.text_value).tree
+					if options.text_value =~ /p/
+     # results = Confabulator::Parser.expand(results).map { |r| r.en.plural }
+					  results = { :pluralize => results }
+					end
+					if options.text_value =~ /c/
+     # results = Confabulator::Parser.expand(results)
+     #               results.each do |r|
+     #                 r[0] = r[0].upcase if r[0]
+     #               end
+					  results = { :capitalize => results }
+					end
+					results
+				else
+					""
+				end
 				end
    end
 
@@ -617,8 +703,12 @@ module Confabulator
    end
 
    module W0
-				def compose(kb = nil)
+				def confabulate(kb = nil)
 					text_value
+				end
+
+				def tree(kb = nil)
+				  confabulate(kb)
 				end
    end
 
@@ -662,8 +752,12 @@ module Confabulator
    end
 
    module EscapedChar1
-				def compose(kb = nil)
+				def confabulate(kb = nil)
 					character.text_value
+				end
+
+				def tree(kb = nil)
+				  confabulate(kb)
 				end
    end
 
@@ -712,8 +806,12 @@ module Confabulator
    end
 
    module Words0
-				def compose(kb = nil)
+				def confabulate(kb = nil)
 					text_value
+				end
+				
+				def tree(kb = nil)
+				  confabulate(kb)
 				end
    end
 

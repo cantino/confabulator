@@ -11,7 +11,7 @@ describe Confabulator do
         "Choice two and stuff"
       ]
     end
-
+    
     it "should be recursive" do
       100.times.map {
         Confabulator::Parser.new("{Choice {1|2}|Choice 3} and stuff").confabulate
@@ -35,6 +35,16 @@ describe Confabulator do
       one.should > two * 3
       one.should < two * 7
     end
+    
+    it "should allow an empty node" do
+      100.times.map {
+        Confabulator::Parser.new("{foo|}bar").confabulate
+      }.uniq.sort.should == [ "bar", "foobar" ]
+
+      100.times.map {
+        Confabulator::Parser.new("{a|b|c|}x").confabulate
+      }.uniq.sort.should == [ "ax", "bx", "cx", "x" ]
+    end
   end
   
   describe "substitutions" do
@@ -47,7 +57,7 @@ describe Confabulator do
     it "should return an empty string if it cannot be found" do
       Confabulator::Parser.new("Hello, [world]!").confabulate.should == "Hello, !"
     end
-
+  
     it "should work recursively" do
       k = Confabulator::Knowledge.new
       k.add "expand" => "is [recursive]", 
@@ -71,11 +81,17 @@ describe Confabulator do
       k.add "blah" => "world foo"
       k.confabulate("Hello. [blah:c]!").should == "Hello. World foo!"
     end
-
+  
     it "should be able to pluralize" do
       k = Confabulator::Knowledge.new
       k.add "blah" => "ancient dog"
       k.confabulate("Many [blah:p]!").should == "Many ancient dogs!"
+    end
+
+    it "should be able to pluralize and capitalize at the same time" do
+      k = Confabulator::Knowledge.new
+      k.add "blah" => "ancient dog"
+      k.confabulate("Many [blah:pc]!").should == "Many Ancient dogs!"
     end
   end
   
@@ -84,7 +100,7 @@ describe Confabulator do
       @k = Confabulator::Knowledge.new
       @k.add "expand" => "  is {[recursive]|  not recursive}", "recursive" => "pretty   cool "
     end
-
+  
     it "should remove repeated spaces between words" do
       @k.confabulate("Hello, this  [expand]!").should_not =~ /  /
     end
@@ -107,6 +123,28 @@ describe Confabulator do
   describe "escaped characters" do
     it "should show up as unescaped" do
       Confabulator::Parser.new("Hi \\[foo]\\{bar\\|foo\\}\\`baz\\` and stuff").confabulate.should == "Hi [foo]{bar|foo}`baz` and stuff"
+    end
+  end
+  
+  describe "enumeration" do
+    it "should be able to enumerate all possible onfabulations" do
+      k = Confabulator::Knowledge.new
+      k.add "expand" => "your {friend|pal}"
+      all = Confabulator::Parser.new("{He{ll}o|Hi} {worl{d|}|there}, says [expand]", :knowledge => k).all_confabulations
+      all.should =~ [
+        "Hello world, says your friend", 
+        "Hello worl, says your friend", 
+        "Hello there, says your friend", 
+        "Hi world, says your friend", 
+        "Hi worl, says your friend", 
+        "Hi there, says your friend",
+        "Hello world, says your pal", 
+        "Hello worl, says your pal", 
+        "Hello there, says your pal", 
+        "Hi world, says your pal", 
+        "Hi worl, says your pal", 
+        "Hi there, says your pal"
+      ]
     end
   end
 end
