@@ -127,7 +127,7 @@ describe Confabulator do
   end
   
   describe "listing all possible confabulations" do
-    it "should be able to enumerate all possible onfabulations" do
+    it "should be able to enumerate all possible confabulations" do
       k = Confabulator::Knowledge.new
       k.add "friend" => "{friend|pal}"
       k.add "from" => "your [friend:c]"
