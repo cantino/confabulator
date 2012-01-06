@@ -87,6 +87,20 @@ Sometimes you want to insert user generated content without having to escape eve
 
 At the moment, sequences of more than one backtick are never allowed inside of a protected region.
 
+### Enumerating possible confabulations
+
+You can output an array of all possible confabulations using `all_confabulations`, like so:
+
+    > Confabulator::Parser.new("{Hello|Hi} {world|there}").all_confabulations
+    => [
+         "Hello world", 
+         "Hello there", 
+         "Hi world", 
+         "Hi there"
+       ]
+
+Internally, this calls `tree`, which outputs a simplified confabulation parse tree.
+
 ## Next Steps
 
 Here are some things that could be added to this library:
