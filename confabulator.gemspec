@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.version     = Confabulator::VERSION
   s.authors     = ["Andrew Cantino"]
   s.email       = ["andrew@iterationlabs.com"]
-  s.homepage    = ""
+  s.homepage    = "https://github.com/cantino/confabulator"
   s.summary     = %q{Ruby generative grammer for conversational text}
   s.description = %q{}
 
